@@ -1,19 +1,13 @@
+import { read } from 'fs';
+
 var express = require('express');
 var rest = require('restler');
 var router = express.Router();
 
 
-/* GET home page. */
-// router.get('/', function(req, res, next) {
-//   res.render('index', { title: 'Express' });
-// });
-
-
-
 router.post('/', function(req, res) {
     console.log(req.body)
     getPrice(req.body.text , function (err , data){
-      console.log("test" + data); 
       res.send(createSuccessResponse(data));      
     });
 });
@@ -28,10 +22,6 @@ return res;
 }
 
 
-
-
-
-
 function getPrice(coin,callback){
 var api = "price";
 var fsym = "fsym";
@@ -39,6 +29,7 @@ var fsym = "fsym";
     api ="pricemulti"
     fsym = "fsyms"
   }
+coin = coin.toUpperCase();
 url = 'https://min-api.cryptocompare.com/data/'+api+'?'+fsym+'='+coin+'&tsyms=BTC,USD,EUR'
 console.log(url)
   rest.get(url).on('complete', function(data) {   
