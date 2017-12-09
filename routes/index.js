@@ -1,5 +1,3 @@
-import { read } from 'fs';
-
 var express = require('express');
 var rest = require('restler');
 var router = express.Router();
@@ -21,7 +19,7 @@ function createSuccessResponse(data){
 return res;
 }
 
-
+//price 
 function getPrice(coin,callback){
 var api = "price";
 var fsym = "fsym";
