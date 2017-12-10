@@ -11,6 +11,10 @@ router.post('/', function(req, res) {
 });
 
 router.post('/message', function(req, res) {
+  console.log(req);
+  if(req.body.challenge != undefined){
+    res.send(req.body.challenge)
+  }
    var coinName = getCoin(req.body.event.text);
    if(coinName != "nocoin"){
    aggregateDataLast24Hours(coinName , function (err , data){
