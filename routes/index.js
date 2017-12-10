@@ -54,7 +54,7 @@ function postToWebhook(data , coinName){
 
 function getCoin(text){
   if(text.substring(0,3)=="?p "){
-    return text.substr(text.length - 3)
+    return text.substr(text.indexOf(" ")+1, text.length - 1);
   }
   return "nocoin";
 }
