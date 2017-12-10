@@ -10,6 +10,31 @@ router.post('/', function(req, res) {
     });
 });
 
+router.post('/message', function(req, res) {
+   var coinName = getCoin(req.body.event.text);
+   if(coinName != "nocoin"){
+   aggregateDataLast24Hours(coinName , function (err , data){
+  postToWebhook(data , coinName);
+  });
+}
+});
+
+function postToWebhook(data , coinName){
+  rest.post('https://hooks.slack.com/services/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', {
+    data: JSON.stringify(createSuccessResponseForLast24Data(data.Data ,coinName))
+  }).on('complete', function(data, response) {
+    // console.log(response);
+  });
+}
+
+
+function getCoin(text){
+  if(text.substring(0,2)=="?p"){
+    return text.substr(text.length - 3)
+  }
+  return "nocoin";
+}
+
 
 function createSuccessResponse(data ){
   var res = { 
@@ -111,7 +136,6 @@ rest.get(url).on('complete', function(data) {
 function aggregateDataLast24Hours(coin,callback){
   coin = coin.toUpperCase();  
   url= 'https://min-api.cryptocompare.com/data/histominute?fsym='+coin+'&tsym=USD&limit=1460&aggregate=1&e=CCCAGG'
-  console.log(url);
   rest.get(url).on('complete', function(data) {   
     callback(null ,data) 
   });
