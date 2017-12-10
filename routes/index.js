@@ -1,7 +1,11 @@
+
+
 var express = require('express');
 var rest = require('restler');
 var router = express.Router();
 
+
+var eventMap = {};
 
 router.post('/', function(req, res) {
   var coinName = req.body.text;
@@ -17,11 +21,27 @@ router.post('/message', function(req, res) {
   }
    var coinName = getCoin(req.body.event.text);
    if(coinName != "nocoin"){
+     if(!checkDoubleSend(coinName ,req.body.event_id )){
+       return;
+     }
    aggregateDataLast24Hours(coinName , function (err , data){
   postToWebhook(data , coinName);
   });
 }
 });
+
+
+function checkDoubleSend(coinName , eventId){
+  if(eventMap[coinName] == undefined){
+    eventMap[coinName]=eventId;
+    return true;
+  }
+  if(eventMap[coinName] == eventId){
+    return false;
+  }
+  eventMap[coinName]= eventId;
+  return true;
+}
 
 function postToWebhook(data , coinName){
   rest.post('https://hooks.slack.com/services/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', {
@@ -33,7 +53,7 @@ function postToWebhook(data , coinName){
 
 
 function getCoin(text){
-  if(text.substring(0,2)=="?p"){
+  if(text.substring(0,3)=="?p "){
     return text.substr(text.length - 3)
   }
   return "nocoin";
