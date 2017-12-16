@@ -24,37 +24,35 @@ router.post('/message', function(req, res) {
   }
    var coinName = getCoin(req.body.event.text);
    if(coinName != "nocoin"){
-     if(!checkDoubleSend(coinName ,req.body.event_id )){
-       return;
-     }
-   aggregateDataLast24Hours(coinName , function (err , data){
-  postToWebhook(data , coinName);
-  });
+     if(req.body.event.text.substring(0,3)=="?p "){
+      if(!checkDoubleSend(coinName ,req.body.event_id )){
+        return;
+      }
+         aggregateDataLast24Hours(coinName , function (err , data){
+        postToWebhook(data , coinName);
+      });
+    }else{
+        sendChart(coinName , req.body.event_id);
+    }
+
 }
 });
 
 
-router.post('/chart' , function (req , res){
-  if(req.body.challenge != undefined){
-    res.send(req.body.challenge)
+function sendChart(coinName , ){
+  if(!checkDoubleSend(coinName ,eventId )){
+    return;
   }
-  // var coinName = getCoin(req.body.event.text);
-  // if(coinName != "nocoin"){
-  //   if(!checkDoubleSend(coinName ,req.body.event_id )){
-  //     return;
-  //   }
-      data = getChartData("eth", function(err , data) {
-        cookedData = prepareData(data.Data)
-        getChart(cookedData);   
-        // postToWebhook(data , coinName);        
-      });
-    // }
-    res.sendFile(path.resolve("chart.png"));
-});
+    data = getChartData(coinName, function(err , data) {
+      cookedData = prepareData(data.Data)
+      getChart(cookedData);   
+      postToWebhookForCharts(data , coinName);        
+    });
+}
 
 function postToWebhookForCharts(data , coinName){
-  rest.post('https://hooks.slack.com/services/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', {
-    data: JSON.stringify(createSuccessResponseForLast24Data(data.Data ,coinName))
+  rest.post('https://hooks.slack.com/services/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', {
+    data: JSON.stringify(createSuccessResponseForCharts(coinName))
   }).on('complete', function(data, response) {
     // console.log(response);
   });
@@ -126,14 +124,14 @@ function postToWebhook(data , coinName){
 
 
 function getCoin(text){
-  if(text.substring(0,3)=="?p "){
+  if(text.substring(0,3)=="?p " || text.substring(0,3)=="?c "){
     return text.substr(text.indexOf(" ")+1, text.length - 1);
   }
   return "nocoin";
 }
 
 
-function createSuccessResponse(data , coinName ){
+function createSuccessResponseForCharts(data , coinName ){
   var res = {
     "text": "Last 2 days price chart for " + coinName ,
     "attachments": [
