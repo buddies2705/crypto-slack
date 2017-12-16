@@ -7,6 +7,9 @@
   },
   "dependencies": {
     "body-parser": "~1.18.2",
+    "canvas": "^1.6.8",
+    "chart.js": "^2.7.1",
+    "chartjs-node": "^1.6.0",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "^4.15.5",

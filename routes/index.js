@@ -2,10 +2,13 @@
 
 var express = require('express');
 var rest = require('restler');
+var charts = require('./charting')
 var router = express.Router();
-
-
 var eventMap = {};
+var chartEventMap = {};
+var path = require('path');
+
+
 
 router.post('/', function(req, res) {
   var coinName = req.body.text;
@@ -15,7 +18,7 @@ router.post('/', function(req, res) {
 });
 
 router.post('/message', function(req, res) {
-  console.log(req);
+  // console.log(req);
   if(req.body.challenge != undefined){
     res.send(req.body.challenge)
   }
@@ -31,6 +34,63 @@ router.post('/message', function(req, res) {
 });
 
 
+router.post('/chart' , function (req , res){
+  if(req.body.challenge != undefined){
+    res.send(req.body.challenge)
+  }
+  // var coinName = getCoin(req.body.event.text);
+  // if(coinName != "nocoin"){
+  //   if(!checkDoubleSend(coinName ,req.body.event_id )){
+  //     return;
+  //   }
+      data = getChartData("eth", function(err , data) {
+        cookedData = prepareData(data.Data)
+        getChart(cookedData);   
+        // postToWebhook(data , coinName);        
+      });
+    // }
+    res.sendFile(path.resolve("chart.png"));
+});
+
+function postToWebhookForCharts(data , coinName){
+  rest.post('https://hooks.slack.com/services/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', {
+    data: JSON.stringify(createSuccessResponseForLast24Data(data.Data ,coinName))
+  }).on('complete', function(data, response) {
+    // console.log(response);
+  });
+}
+
+
+
+function prepareData(data){
+  var obj = {};
+  var timeArr = [];
+  var coinValueArr = [];
+  data.forEach(element => {
+    timeArr.push(element.time * 1000)
+    coinValueArr.push(element.close) //proper epoch time
+  });
+  obj['time'] = timeArr;
+  obj['value'] = coinValueArr;
+return obj;
+}
+
+function getChart(data){
+   options = getChartOptions(data);
+   charts.getChart(options)
+}
+
+
+function getChartData(coin , callback){
+  coin = coin.toUpperCase();  
+  url= 'https://min-api.cryptocompare.com/data/histominute?fsym='+coin+'&tsym=USD&limit=1440&aggregate=1&e=CCCAGG'
+  // console.log(url);
+  rest.get(url).on('complete', function(data) {   
+    // console.log(data); // auto convert to object
+    callback(null ,data) 
+  });
+}
+
 function checkDoubleSend(coinName , eventId){
   if(eventMap[coinName] == undefined){
     eventMap[coinName]=eventId;
@@ -40,6 +100,19 @@ function checkDoubleSend(coinName , eventId){
     return false;
   }
   eventMap[coinName]= eventId;
+  return true;
+}
+
+
+function checkChartDoubleSend(coinName , eventId){
+  if(chartEventMap[coinName] == undefined){
+    chartEventMap[coinName]=eventId;
+    return true;
+  }
+  if(chartEventMap[coinName] == eventId){
+    return false;
+  }
+  chartEventMap[coinName]= eventId;
   return true;
 }
 
@@ -60,12 +133,15 @@ function getCoin(text){
 }
 
 
-function createSuccessResponse(data ){
-  var res = { 
-    "text": "*BTC =* " + data.BTC  + " *EUR =* " + data.EUR + " *USD =* "+ data.USD,
-    "username": "coinprice",
-    "mrkdwn": true
-  }
+function createSuccessResponse(data , coinName ){
+  var res = {
+    "text": "Last 2 days price chart for " + coinName ,
+    "attachments": [
+        {
+          "image_url": path.resolve("chart.png")
+        }
+    ]
+}
 return res;
 }
 
@@ -134,7 +210,7 @@ var fsym = "fsym";
 coin = coin.toUpperCase();
 url = 'https://min-api.cryptocompare.com/data/'+api+'?'+fsym+'='+coin+'&tsyms=BTC,USD,EUR'
   rest.get(url).on('complete', function(data) {   
-    console.log(data); // auto convert to object
+    // console.log(data); // auto convert to object
     callback(null ,data) 
   });
 }
@@ -148,9 +224,9 @@ module.exports = router;
 function coinPriceSnapShot(coin,callback){
 coin = coin.toUpperCase();  
 url= 'https://www.cryptocompare.com/api/data/coinsnapshot/?fsym='+ coin +'&tsym=USD'
-console.log(url);
+// console.log(url);
 rest.get(url).on('complete', function(data) {   
-  console.log(data); // auto convert to object
+  // console.log(data); // auto convert to object
   callback(null ,data) 
 });
 }
@@ -164,3 +240,73 @@ function aggregateDataLast24Hours(coin,callback){
     callback(null ,data) 
   });
   }
+
+
+
+  function getChartOptions(values){
+    var options = {
+      type: 'line',
+      data: {
+        labels: values['time'],
+        datasets: [
+            {
+                label: "price",
+                backgroundColor: "rgba(26, 31, 31,1)",
+                borderColor: "rgba(75,192,192,1)",
+                data: values['value'],
+                fill:false
+            }
+        ]
+    },
+      options: {
+        showLines : true,
+        scales: {
+          xAxes: [{
+            type: 'time',
+            time: {
+              displayFormats: {
+                'millisecond': 'MMMM Do YYYY, h:mm:ss a',
+                'second': 'MMMM Do YYYY, h:mm:ss a',
+                'minute': 'MMMM Do YYYY, h:mm:ss a',
+                'hour': 'MMMM Do YYYY, h:mm:ss a',
+                'day': 'MMMM Do YYYY, h:mm:ss a',
+                'week': 'MMMM Do YYYY, h:mm:ss a',
+                'month': 'MMMM Do YYYY, h:mm:ss a',
+                'quarter': 'MMMM Do YYYY, h:mm:ss a',
+                'year': 'MMMM Do YYYY, h:mm:ss a',
+              }
+            }
+          }],
+        },
+      }
+  
+    }
+  return options;  
+  }
+
+  // function getChartOptions(values){
+  //   var options = {
+  //     type: 'line',
+  //     data: {
+  //       labels: values['time'],
+  //       datasets: [	
+  //         {
+  //           label: '# of Points',
+  //           data: values['value'],
+  //           borderWidth: 1
+  //         }
+  //       ]
+  //     },
+  //     options: {
+  //       scales: {
+  //         yAxes: [{
+  //           ticks: {
+  //             reverse: false
+  //           }
+  //         }]
+  //       }
+  //     }
+  //   }
+  // return options;  
+  // }
+  
