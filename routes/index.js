@@ -7,13 +7,15 @@ var router = express.Router();
 var eventMap = {};
 var chartEventMap = {};
 var path = require('path');
+var request = require('request');
+var fs = require('fs');
 
 
 
 router.post('/', function(req, res) {
   var coinName = req.body.text;
     aggregateDataLast24Hours(coinName , function (err , data){
-      res.send(createSuccessResponseForLast24Data(data.Data ,coinName));      
+      res.send(createSuccessResponseForLast24Data(data.Data ,coinName));       
     });
 });
 
@@ -39,26 +41,66 @@ router.post('/message', function(req, res) {
 });
 
 
-function sendChart(coinName , ){
-  if(!checkDoubleSend(coinName ,eventId )){
+function sendChart(coinName ,eventId ){
+  if(!checkChartDoubleSend(coinName ,eventId )){
     return;
   }
     data = getChartData(coinName, function(err , data) {
       cookedData = prepareData(data.Data)
-      getChart(cookedData);   
-      postToWebhookForCharts(data , coinName);        
+      getChart(cookedData , coinName);   
+      uploadChart(coinName);        
     });
 }
 
+
 function postToWebhookForCharts(data , coinName){
-  rest.post('https://hooks.slack.com/services/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', {
+  rest.post('https://hooks.slack.com/services/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', {
     data: JSON.stringify(createSuccessResponseForCharts(coinName))
   }).on('complete', function(data, response) {
-    // console.log(response);
+    console.log(response);
+  }).on('fail' , function(data, response){
+    console.log(response)
+  }).on('success' , function(data, response){
+    console.log(response)
   });
 }
 
 
+// function uploadChart(coinName){
+//   rest.post('https://slack.com/api/files.upload', {
+//     multipart: true,    
+//     token : 'xoxp-282844122951-282844123143-287210142497-ce3c3f853d0705f123562e2f22a7090e' ,
+//      channels:"C893C2W0G" ,
+//      data:{      
+//       'image[message]': 'Charts',
+//       'image[file]': rest.file(path.resolve("chart.png"), null, 321567, null, 'image/pmg')
+//       },
+//       filename:"charts" ,
+//       title: "chart for " + coinName })
+//   .on('complete', function(data, response) {
+//     console.log(response);
+//   }).on('fail' , function(data, response){
+//     console.log(response)
+//   }).on('success' , function(data, response){
+//     console.log(response)
+//   });
+// }
+
+function uploadChart(coinName){
+//   request.post({
+//   url: 'https://slack.com/api/files.upload',
+//   formData: {
+//       token: 'xoxp-282844122951-282844123143-287210142497-ce3c3f853d0705f123562e2f22a7090e',
+//       title: "Chart",
+//       filename: coinName + "_chart.png",
+//       filetype: "auto",
+//       channels: 'C893C2W0G',
+//       file: fs.createReadStream(path.resolve("chart.png")),
+//   },
+// }, function (err, response) {
+//   console.log(JSON.parse(response.body));
+// });
+}
 
 function prepareData(data){
   var obj = {};
@@ -73,9 +115,11 @@ function prepareData(data){
 return obj;
 }
 
-function getChart(data){
-   options = getChartOptions(data);
+function getChart(data , coinName){
+ if(data.time.length >0){
+   options = getChartOptions(data,coinName);
    charts.getChart(options)
+    }
 }
 
 
@@ -131,11 +175,12 @@ function getCoin(text){
 }
 
 
-function createSuccessResponseForCharts(data , coinName ){
+function createSuccessResponseForCharts(coinName ){
   var res = {
     "text": "Last 2 days price chart for " + coinName ,
     "attachments": [
         {
+          "text": "chart",          
           "image_url": path.resolve("chart.png")
         }
     ]
@@ -241,14 +286,14 @@ function aggregateDataLast24Hours(coin,callback){
 
 
 
-  function getChartOptions(values){
+  function getChartOptions(values , coinName){
     var options = {
       type: 'line',
       data: {
         labels: values['time'],
         datasets: [
             {
-                label: "price",
+                label: coinName + " price(Last 2 Days)",
                 backgroundColor: "rgba(26, 31, 31,1)",
                 borderColor: "rgba(75,192,192,1)",
                 data: values['value'],
