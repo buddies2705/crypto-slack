@@ -308,15 +308,15 @@ function aggregateDataLast24Hours(coin,callback){
             type: 'time',
             time: {
               displayFormats: {
-                'millisecond': 'MMMM Do YYYY, h:mm:ss a',
-                'second': 'MMMM Do YYYY, h:mm:ss a',
-                'minute': 'MMMM Do YYYY, h:mm:ss a',
-                'hour': 'MMMM Do YYYY, h:mm:ss a',
-                'day': 'MMMM Do YYYY, h:mm:ss a',
-                'week': 'MMMM Do YYYY, h:mm:ss a',
-                'month': 'MMMM Do YYYY, h:mm:ss a',
-                'quarter': 'MMMM Do YYYY, h:mm:ss a',
-                'year': 'MMMM Do YYYY, h:mm:ss a',
+                'millisecond': 'lll',
+                'second': 'lll',
+                'minute': 'lll',
+                'hour': 'lll',
+                'day': 'lll',
+                'week': 'lll',
+                'month': 'lll',
+                'quarter': 'lll',
+                'year': 'lll',
               }
             }
           }],
