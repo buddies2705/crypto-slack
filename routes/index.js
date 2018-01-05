@@ -9,8 +9,77 @@ var chartEventMap = {};
 var path = require('path');
 var request = require('request');
 var fs = require('fs');
+var Twitter = require('twitter');
+var last_tweet = -1 ;
 
 
+
+var textat = "New signal: Buy $MTL! Price: 0.00067500$ETH $BTC #Blockchain $Crypto #cryptolife #LTC #cryptocurrency #Crypto #ETH $Alts #Bitcoin #BTC #AltCoins #Ethereum #signals"
+var client = new Twitter({
+ consumer_key: 'nUIccGohcRFBjyGe0RHc4a4Eb',
+ consumer_secret: '0e4Aw8urXK0hEKVeJ5N1wkiuAvtRnxeqcuPV4FMRGPeopJrqII',
+ access_token_key: '1601920002-H9PGY6v3COqr2bLjAjEeF52F9NeWPO9KLQw2IeE',
+ access_token_secret: 'QEHNn8sXOO86JDxAltZKc17sXDR3JdQdJD2wHw8oPyJUB'
+});
+
+
+router.get('/' , function(req , res){
+pricePridiction();
+
+});
+
+function pricePridiction(){
+  var params = {screen_name: 'Metis_AI' , count : 50};
+  client.get('statuses/user_timeline', params, function(error, tweets, response) {
+    if (!error) {
+      console.log(tweets)    
+      for(var i = 0 ; i < tweets.length ; i ++){
+        if(last_tweet !== tweets[i].id){
+          last_tweet =tweets[i].id; 
+          prepareTweet(tweets[i].text);
+        }
+      }  
+   }
+  });
+}
+
+
+function prepareTweet(tweet){
+  if(tweet.indexOf("Price") !== -1 || tweet.indexOf("Now") !== -1){
+    tweet = sanatize(tweet);
+    uploadTweet(tweet);
+  }
+}
+
+function uploadTweet(tweetText){
+  var res = { 
+    "text":  tweetText,
+    "mrkdwn": true
+  }
+  rest.post('https://hooks.slack.com/services/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', {
+    data: JSON.stringify(res)
+  }).on('complete', function(data, response) {
+    console.log(response);
+  });
+}
+
+function sanatize(tweet){
+  var lastPosition = -1;
+  for (var i=9 , j =0 ; i < tweet.length; i++ , j++) { 
+    if(IsNumeric(tweet.substring(j,i))){
+      lastPosition = i +1 ;
+      break;
+    }
+  } 
+  if(lastPosition > 0){
+  return tweet.substring(0 , lastPosition);
+  }else return "";
+}
+
+function IsNumeric(input){
+  var RE = /^-{0,1}\d*\.{0,1}\d+$/;
+  return (RE.test(input));
+}
 
 router.post('/', function(req, res) {
   var coinName = req.body.text;
@@ -66,40 +135,9 @@ function postToWebhookForCharts(data , coinName){
 }
 
 
-// function uploadChart(coinName){
-//   rest.post('https://slack.com/api/files.upload', {
-//     multipart: true,    
-//     token : 'xoxp-282844122951-282844123143-287210142497-ce3c3f853d0705f123562e2f22a7090e' ,
-//      channels:"C893C2W0G" ,
-//      data:{      
-//       'image[message]': 'Charts',
-//       'image[file]': rest.file(path.resolve("chart.png"), null, 321567, null, 'image/pmg')
-//       },
-//       filename:"charts" ,
-//       title: "chart for " + coinName })
-//   .on('complete', function(data, response) {
-//     console.log(response);
-//   }).on('fail' , function(data, response){
-//     console.log(response)
-//   }).on('success' , function(data, response){
-//     console.log(response)
-//   });
-// }
 
 function uploadChart(coinName){
-//   request.post({
-//   url: 'https://slack.com/api/files.upload',
-//   formData: {
-//       token: 'xoxp-282844122951-282844123143-287210142497-ce3c3f853d0705f123562e2f22a7090e',
-//       title: "Chart",
-//       filename: coinName + "_chart.png",
-//       filetype: "auto",
-//       channels: 'C893C2W0G',
-//       file: fs.createReadStream(path.resolve("chart.png")),
-//   },
-// }, function (err, response) {
-//   console.log(JSON.parse(response.body));
-// });
+
 }
 
 function prepareData(data){
@@ -327,29 +365,4 @@ function aggregateDataLast24Hours(coin,callback){
   return options;  
   }
 
-  // function getChartOptions(values){
-  //   var options = {
-  //     type: 'line',
-  //     data: {
-  //       labels: values['time'],
-  //       datasets: [	
-  //         {
-  //           label: '# of Points',
-  //           data: values['value'],
-  //           borderWidth: 1
-  //         }
-  //       ]
-  //     },
-  //     options: {
-  //       scales: {
-  //         yAxes: [{
-  //           ticks: {
-  //             reverse: false
-  //           }
-  //         }]
-  //       }
-  //     }
-  //   }
-  // return options;  
-  // }
-  
+  module.exports.price_pridiction  = pricePridiction;

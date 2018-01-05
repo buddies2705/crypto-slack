@@ -17,6 +17,7 @@
     "morgan": "~1.9.0",
     "request": "^2.83.0",
     "restler": "^3.4.0",
-    "serve-favicon": "~2.4.5"
+    "serve-favicon": "~2.4.5",
+    "twitter": "^1.7.1"
   }
 }
