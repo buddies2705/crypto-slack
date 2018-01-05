@@ -82,14 +82,14 @@ function onError(error) {
  */
 
 function onListening() {
-  // try{
-  // setInterval( function() {
-  //   index.price_pridiction();
-  // }, 1000 * 60 * 5 )
-  // }
-  // catch(error){
-  //     console.log(error);
-  // }
+  try{
+  setInterval( function() {
+    index.price_pridiction();
+  }, 1000 * 60 * 5 )
+  }
+  catch(error){
+      console.log(error);
+  }
   // var addr = server.address();
   // var bind = typeof addr === 'string'
   //   ? 'pipe ' + addr

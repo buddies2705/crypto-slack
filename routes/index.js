@@ -22,23 +22,15 @@ var client = new Twitter({
  access_token_secret: 'QEHNn8sXOO86JDxAltZKc17sXDR3JdQdJD2wHw8oPyJUB'
 });
 
-
-router.get('/' , function(req , res){
-pricePridiction();
-
-});
-
 function pricePridiction(){
-  var params = {screen_name: 'Metis_AI' , count : 50};
+  var params = {screen_name: 'Metis_AI' , count : 1};
   client.get('statuses/user_timeline', params, function(error, tweets, response) {
     if (!error) {
-      console.log(tweets)    
-      for(var i = 0 ; i < tweets.length ; i ++){
-        if(last_tweet !== tweets[i].id){
-          last_tweet =tweets[i].id; 
-          prepareTweet(tweets[i].text);
-        }
-      }  
+     if(last_tweet !== tweets[0].id){
+      console.log(tweets)          
+      last_tweet =tweets[0].id; 
+       prepareTweet(tweets[0].text);
+     }
    }
   });
 }
@@ -56,7 +48,7 @@ function uploadTweet(tweetText){
     "text":  tweetText,
     "mrkdwn": true
   }
-  rest.post('https://hooks.slack.com/services/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', {
+  rest.post('https://hooks.slack.com/services/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', {
     data: JSON.stringify(res)
   }).on('complete', function(data, response) {
     console.log(response);
