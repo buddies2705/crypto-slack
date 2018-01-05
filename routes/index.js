@@ -48,7 +48,7 @@ function uploadTweet(tweetText){
     "text":  tweetText,
     "mrkdwn": true
   }
-  rest.post('https://hooks.slack.com/services/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', {
+  rest.post('https://hooks.slack.com/services/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', {
     data: JSON.stringify(res)
   }).on('complete', function(data, response) {
     console.log(response);
