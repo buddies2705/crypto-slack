@@ -1,5 +1,4 @@
 
-
 var express = require('express');
 var rest = require('restler');
 var charts = require('./charting')
@@ -10,11 +9,26 @@ var path = require('path');
 var request = require('request');
 var fs = require('fs');
 var Twitter = require('twitter');
+// var update_profile = require('./updateprofile')
+// var tlogin = require('./login')
+
+
 var last_tweet = -1 ;
 
 
 
-var textat = "New signal: Buy $MTL! Price: 0.00067500$ETH $BTC #Blockchain $Crypto #cryptolife #LTC #cryptocurrency #Crypto #ETH $Alts #Bitcoin #BTC #AltCoins #Ethereum #signals"
+router.get('/' , function(req , res) {
+//   update_profile.updateP("Gaurav Agrawal").then( function(result) {
+//     console.log(result) 
+// });
+// tlogin.lg().then( function(result) {
+//   console.log(result) 
+// }); 
+// sendLiveIcos();
+ res.send("ok");
+});
+
+// var textat = "New signal: Buy $MTL! Price: 0.00067500$ETH $BTC #Blockchain $Crypto #cryptolife #LTC #cryptocurrency #Crypto #ETH $Alts #Bitcoin #BTC #AltCoins #Ethereum #signals"
 var client = new Twitter({
  consumer_key: 'nUIccGohcRFBjyGe0RHc4a4Eb',
  consumer_secret: '0e4Aw8urXK0hEKVeJ5N1wkiuAvtRnxeqcuPV4FMRGPeopJrqII',
@@ -81,12 +95,16 @@ router.post('/', function(req, res) {
 });
 
 router.post('/message', function(req, res) {
+  try{
   // console.log(req);
   if(req.body.challenge != undefined){
     res.send(req.body.challenge)
   }
+  
    var coinName = getCoin(req.body.event.text);
-   if(coinName != "nocoin"){
+   if(coinName == "liveico"){
+      sendLiveIcos();
+   }else if(coinName != "nocoin"){
      if(req.body.event.text.substring(0,3)=="?p "){
       if(!checkDoubleSend(coinName ,req.body.event_id )){
         return;
@@ -97,10 +115,68 @@ router.post('/message', function(req, res) {
     }else{
         sendChart(coinName , req.body.event_id);
     }
-
+  }
+}
+catch(err){
+  console.log(err);
 }
 });
 
+function sendLiveIcos(){
+  url= 'https://api.icowatchlist.com/public/v1/live'
+  // console.log(url);
+  rest.get(url).on('complete', function(data) { 
+    data = JSON.parse(data);  
+    console.log(data); // auto convert to object
+    parseIcoData(data);
+  });
+}
+
+function parseIcoData(data){
+  var start_date = new Date();
+  start_date.setDate(start_date.getDate() - 7);
+  var arr = data.ico.live;
+  var result = [];
+  for(var i =0 ; i< arr.length ; i++){
+    if (start_date <= new Date(arr[i].start_time)){
+      result.push(arr[i]);
+    }
+  }
+  var textResponse = createIcoResponse(result); 
+  if(textResponse != ""){
+      sendIco(textResponse);
+  }
+}
+
+function createIcoResponse(result){
+  var responseText = "";
+  result.forEach(element => {
+      var name = element.name + "\n";
+      var description = element.description  + "\n";
+      var startTime = element.start_time + "\n";
+      var endTime = element.end_time + "\n";
+      var url = element.website_link + "\n";  
+      var newLine = "\n \n"
+      responseText += "Name - " + name + "Description - " + description + "StartDate - " + startTime + "EndDate - " + endTime + "Website - " + url + newLine 
+  });
+  return responseText;
+}
+
+
+function sendIco(textResponse){
+      rest.post('https://hooks.slack.com/services/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', {
+        data: JSON.stringify(createIcoSlackResponse(textResponse))
+      }).on('complete', function(textResponse, response) {
+        // console.log(response);
+      });
+}
+
+function createIcoSlackResponse(textResponse){
+  var res = {
+    "text": textResponse
+}
+return res;
+}
 
 function sendChart(coinName ,eventId ){
   if(!checkChartDoubleSend(coinName ,eventId )){
@@ -200,6 +276,9 @@ function postToWebhook(data , coinName){
 function getCoin(text){
   if(text.substring(0,3)=="?p " || text.substring(0,3)=="?c "){
     return text.substr(text.indexOf(" ")+1, text.length - 1);
+  }
+  if(text.substring(0,6)=="?l-ico" ){
+    return "liveico"
   }
   return "nocoin";
 }
