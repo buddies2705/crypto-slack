@@ -288,7 +288,7 @@ function getCoin(text){
   if(text.substring(0,3)=="?p " || text.substring(0,3)=="?c "){
     return text.substr(text.indexOf(" ")+1, text.length - 1);
   }
-  if(text.substring(0,6)=="?l-ico" ){
+  if(text.substring(0,4)=="?ico" ){
     return "liveico"
   }
   return "nocoin";
