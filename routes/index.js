@@ -5,6 +5,7 @@ var charts = require('./charting')
 var router = express.Router();
 var eventMap = {};
 var chartEventMap = {};
+var icoMap = {"ico" : -1};
 var path = require('path');
 var request = require('request');
 var fs = require('fs');
@@ -103,7 +104,9 @@ router.post('/message', function(req, res) {
   
    var coinName = getCoin(req.body.event.text);
    if(coinName == "liveico"){
-      sendLiveIcos();
+      if(checkIcoDoubleSend(req.body.event_id)){
+          sendLiveIcos();
+      }
    }else if(coinName != "nocoin"){
      if(req.body.event.text.substring(0,3)=="?p "){
       if(!checkDoubleSend(coinName ,req.body.event_id )){
@@ -237,6 +240,14 @@ function getChartData(coin , callback){
     // console.log(data); // auto convert to object
     callback(null ,data) 
   });
+}
+
+function checkIcoDoubleSend(eventId){
+  if(icoMap["ico"] == eventId){
+    return false;
+  }
+  icoMap["ico"] = eventId;
+  return true;
 }
 
 function checkDoubleSend(coinName , eventId){
