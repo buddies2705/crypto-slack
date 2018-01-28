@@ -1,4 +1,3 @@
-
 var express = require('express');
 var rest = require('restler');
 var charts = require('./charting')
@@ -12,7 +11,10 @@ var fs = require('fs');
 var Twitter = require('twitter');
 // var update_profile = require('./updateprofile')
 // var tlogin = require('./login')
-
+process.on('uncaughtException', function (err) {
+  console.error(err);
+  console.log("Node NOT Exiting...");
+});
 
 var last_tweet = -1 ;
 
@@ -26,6 +28,9 @@ router.get('/' , function(req , res) {
 //   console.log(result) 
 // }); 
 // sendLiveIcos();
+
+  // getkey();
+  // setkey(1212323);
  res.send("ok");
 });
 
@@ -37,22 +42,44 @@ var client = new Twitter({
  access_token_secret: 'QEHNn8sXOO86JDxAltZKc17sXDR3JdQdJD2wHw8oPyJUB'
 });
 
+function getkey(callback){
+request('https://api.keyvalue.xyz/de14c970/yesyy', function (error, response, body) {
+  callback(error , Number(response.body.replace(/\n|\r/g, "")));
+});
+}
+
+function setkey(key){
+  request.post({url:'https://api.keyvalue.xyz/de14c970/yesyy/' + key}, function(err,response,body){
+    console.log(response);
+   });
+  
+
+}
+
 function pricePridiction(){
   var params = {screen_name: 'Metis_AI' , count : 1};
   client.get('statuses/user_timeline', params, function(error, tweets, response) {
     if (!error) {
-     if(last_tweet !== tweets[0].id){
-      console.log(tweets)          
-      last_tweet =tweets[0].id; 
-       prepareTweet(tweets[0].text);
-     }
+      try{
+         getkey(function(err , key){
+           last_tweet = key;
+           if(last_tweet !== tweets[0].id){
+            console.log(tweets)          
+             setkey(tweets[0].id); 
+             prepareTweet(tweets[0].text);
+           }
+         });
+      }
+      catch(err){
+        setkey(tweets[0].id);
+       }
    }
   });
 }
 
 
 function prepareTweet(tweet){
-  if(tweet.indexOf("Price") !== -1 || tweet.indexOf("Now") !== -1){
+  if((tweet.indexOf("Price") !== -1 || tweet.indexOf("Now") !== -1) && tweet.substring(0, 6) !== "UPDATE"){
     tweet = sanatize(tweet);
     uploadTweet(tweet);
   }
@@ -63,7 +90,7 @@ function uploadTweet(tweetText){
     "text":  tweetText,
     "mrkdwn": true
   }
-  rest.post('https://hooks.slack.com/services/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', {
+  rest.post('https://hooks.slack.com/services/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', {
     data: JSON.stringify(res)
   }).on('complete', function(data, response) {
     console.log(response);
