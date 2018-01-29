@@ -79,7 +79,7 @@ function pricePridiction(){
 
 
 function prepareTweet(tweet){
-  if((tweet.indexOf("Price") !== -1 || tweet.indexOf("Now") !== -1) && tweet.substring(0, 6) !== "UPDATE"){
+  if((tweet.indexOf("Price") !== -1 || tweet.indexOf("Now") !== -1) && (tweet.substring(0, 6) !== "UPDATE" || tweet.substring(0,12)!== "FINAL UPDATE")){
     tweet = sanatize(tweet);
     uploadTweet(tweet);
   }
