@@ -32,11 +32,11 @@ chartNode.drawChart(chartJsOptions)
     request.post({
         url: 'https://slack.com/api/files.upload',
         formData: {
-            token: 'xoxp-282844122951-282844123143-287210142497-ce3c3f853d0705f123562e2f22a7090e',
+            token: 'ENTER_YOUR_TOKEN',
             title: "Chart",
             filename: "chart.png",
             filetype: "auto",
-            channels: 'C893C2W0G',
+            channels: 'YOUR_CHANNEL_ID',
             file: fs.createReadStream(path.resolve("chart.png")),
         },
       }, function (err, response) {
